@@ -10,4 +10,22 @@ class Plane {
 	public function new() {
 		normal = new FastVector3();
 	}
+
+	public function normalize() {
+		var mag: FastFloat;
+		mag = Math.sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+		normal.x = normal.x / mag;
+		normal.y = normal.y / mag;
+		normal.z = normal.z / mag;
+		d = d / mag;
+	}
+
+	public function normalizeN() {
+		// Nur die Normale
+		var mag: FastFloat;
+		mag = Math.sqrt(normal.x * normal.x + normal.y * normal.y + normal.z * normal.z);
+		normal.x = normal.x / mag;
+		normal.y = normal.y / mag;
+		normal.z = normal.z / mag;
+	}
 }

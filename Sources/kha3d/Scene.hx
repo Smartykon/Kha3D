@@ -34,7 +34,13 @@ class Scene {
 	static var normals: Image;
 	static var image: Image;
 
-	public static function init() {
+	static var render_w: Int;
+	static var render_h: Int;
+
+	public static function init(_render_w: Int, _render_h: Int) {
+		render_w = _render_w;
+		render_h = _render_h;
+
 		Lights.init();
 
 		instancedStructure = new VertexStructure();
@@ -54,9 +60,9 @@ class Scene {
 		mvp = pipeline.getConstantLocation("mvp");
 		texUnit = pipeline.getTextureUnit("image");
 
-		colors = depth = Image.createRenderTarget(System.windowWidth(), System.windowHeight(), RGBA32, Depth32Stencil8);
-		normals = Image.createRenderTarget(System.windowWidth(), System.windowHeight(), RGBA32, NoDepthAndStencil);
-		image = Image.createRenderTarget(System.windowWidth(), System.windowHeight(), RGBA32, NoDepthAndStencil);
+		colors = depth = Image.createRenderTarget(render_w, render_h, RGBA32, Depth32Stencil8);
+		normals = Image.createRenderTarget(render_w, render_h, RGBA32, NoDepthAndStencil);
+		image = Image.createRenderTarget(render_w, render_h, RGBA32, NoDepthAndStencil);
 
 		TextureViewer.init();
 
@@ -72,8 +78,9 @@ class Scene {
 		g.drawIndexedVerticesInstanced(instanceCount, 0, meshes[0].mesh.indexBuffer.count());
 	}
 
-	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, image: Image): Void {
-		var planes = Culling.perspectiveToPlanes(vp);
+	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, image: Image): Void {
+		//var planes = Culling.perspectiveToPlanes(vp);
+		var planes = Culling.perspectiveToPlanes(comboMatrix);
 
 		var instanceIndex = 0;
 		var b2 = instancedVertexBuffer.lock();
@@ -94,7 +101,7 @@ class Scene {
 		draw(g, instanceIndex);
 	}
 
-	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, meshImage: Image, splineImage: Image, heightsImage: Image) {
+	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image, heightsImage: Image) {
 		var g = colors.g4;
 		g.begin([normals]);
 		g.clear(0xff00ffff, Math.POSITIVE_INFINITY);
@@ -104,7 +111,7 @@ class Scene {
 		for (spline in splines) {
 			spline.render(g, mvp, mv, splineImage, heightsImage);
 		}
-		renderMeshes(g, mvp, mv, vp, meshImage);
+		renderMeshes(g, mvp, mv, vp, comboMatrix, meshImage);
 		g.end();
 	}
 
@@ -118,10 +125,10 @@ class Scene {
 		g.end();
 	}
 
-	public static function render(frame: Canvas, position: Vector3, direction: Vector3) {
+	public static function render1(position: Vector3, direction: Vector3) {
 		var model = FastMatrix4.identity(); // FastMatrix4.rotationY(Scheduler.time());
 		var view = FastMatrix4.lookAt(position.fast(), position.add(direction).fast(), new FastVector3(0, 1, 0));
-		var projection = FastMatrix4.perspectiveProjection(45, System.windowWidth(0) / System.windowHeight(0), 0.1, 550.0);
+		var projection = FastMatrix4.perspectiveProjection(45, render_w / render_h, 0.1, 550.0);
 
 		var suneye = new FastVector3(position.x + 50.0, 150.0, position.z - 100.0);
 		var sunat = new FastVector3(position.x, 0, position.z);
@@ -132,21 +139,24 @@ class Scene {
 		var mvp = projection.multmat(view).multmat(model);
 		var inv = mvp.inverse();
 
+		var comboMatrix = projection.multmat( view );
+		//var comboMatrix =  projection.multmat( mv );
+
 		var sunMvp = sunprojection.multmat(sunview).multmat(model);
 
 		Shadows.render(sunMvp);
 
-		Scene.renderGBuffer(mvp, mv, projection.multmat(view), meshes[0].texture, splines[0].texture, heightMap.heightsImage);
+		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, meshes[0].texture, splines[0].texture, heightMap.heightsImage);
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
-
-		var g = frame.g4;
-		g.begin();
-		TextureViewer.render(g, colors, false, -1, -1, 1, 1);
-		TextureViewer.render(g, depth, true, -1, 0, 1, 1);
+	}
+	public static function render2(g4: Graphics, position: Vector3, direction: Vector3) {
+		var debug_w: Int = render_w * 2;
+		var debug_h: Int = render_h * 2;
+		TextureViewer.render(g4, colors, false, 0, 0, debug_w, debug_h);
+		TextureViewer.render(g4, depth, true, debug_w, 0, debug_w, debug_h);
 		//TextureViewer.render(g, shadowMap, true, 0, 0, 1, 1);
-		TextureViewer.render(g, normals, false, 0, -1, 1, 1);
-		TextureViewer.render(g, image, false, 0, 0, 1, 1);
-		g.end();
+		TextureViewer.render(g4, normals, false, 0, debug_h, debug_w, debug_h);
+		TextureViewer.render(g4, image, false, debug_w, debug_h, debug_w, debug_h);
 	}
 }

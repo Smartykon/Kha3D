@@ -501,8 +501,8 @@ class OgexData extends Container {
 		return lo;
 	}
 
-	function parseColor(s:Array<String>):Color {
-		var col = new Color();
+	function parseColor(s:Array<String>):OgexColor {
+		var col = new OgexColor();
 		col.attrib = s[3].split('"')[1];
 		for (i in 5...s.length) {
 			var ss = s[i];
@@ -766,7 +766,7 @@ class LightObject {
 
 	public var ref:String;
 	public var type:String;
-	public var color:Color;
+	public var color:OgexColor;
 	public var atten:Atten;
 
 	public function new() {}
@@ -784,7 +784,7 @@ class Material {
 
 	public var ref:String;
 	public var name:String;
-	public var colors:Array<Color> = [];
+	public var colors:Array<OgexColor> = [];
 	public var texture:Array<Texture>=[];
 	public var params:Array<Param> = [];
 
@@ -887,7 +887,7 @@ class IndexArray {
 	public function new() {}
 }
 
-class Color {
+class OgexColor {
 
 	public var attrib:String;
 	public var values:Array<Float> = [];

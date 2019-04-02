@@ -5,10 +5,16 @@ import kha.graphics4.Graphics;
 import kha.graphics4.IndexBuffer;
 import kha.graphics4.PipelineState;
 import kha.graphics4.TextureUnit;
+import kha.graphics4.TextureAddressing;
+import kha.graphics4.TextureFilter;
+import kha.graphics4.MipMapFilter;
 import kha.graphics4.VertexBuffer;
 import kha.graphics4.VertexStructure;
+import kha.FastFloat;
+import kha.math.FastMatrix4;
 import kha.Image;
 import kha.Shaders;
+import kha.System;
 
 class TextureViewer {
 	static var pipeline: PipelineState;
@@ -16,6 +22,8 @@ class TextureViewer {
 	static var indexBuffer: IndexBuffer;
 	static var tex: TextureUnit;
 	static var isDepth: ConstantLocation;
+	static var projectionMatrix: FastMatrix4;
+	static var projectionLocation: ConstantLocation;
 
 	public static function init() {
 		var structure = new VertexStructure();
@@ -44,19 +52,25 @@ class TextureViewer {
 
 		tex = pipeline.getTextureUnit("image");
 		isDepth = pipeline.getConstantLocation("isDepth");
+		projectionLocation = pipeline.getConstantLocation("projectionMatrix");
+
+		projectionMatrix = FastMatrix4.orthogonalProjection(0.0, System.windowWidth(0), System.windowHeight(0), 0.0, 0.1, 550.0);
 	}
 
 	public static function render(g: Graphics, image: Image, depth: Bool, x: Float, y: Float, w: Float, h: Float) {
 		var vertices = vertexBuffer.lock();
-		vertices.set(0, x); vertices.set(1, y); vertices.set(2, 0); vertices.set(3, 0);
-		vertices.set(4, x + w); vertices.set(5, y); vertices.set(6, 1); vertices.set(7, 0);
-		vertices.set(8, x); vertices.set(9, y + h); vertices.set(10, 0); vertices.set(11, 1);
-		vertices.set(12, x + w); vertices.set(13, y + h); vertices.set(14, 1); vertices.set(15, 1);
+		vertices.set( 0, x    ); vertices.set( 1, y    ); vertices.set( 2, 0); vertices.set( 3, 1);
+		vertices.set( 4, x + w); vertices.set( 5, y    ); vertices.set( 6, 1); vertices.set( 7, 1);
+		vertices.set( 8, x    ); vertices.set( 9, y + h); vertices.set(10, 0); vertices.set(11, 0);
+		vertices.set(12, x + w); vertices.set(13, y + h); vertices.set(14, 1); vertices.set(15, 0);
 		vertexBuffer.unlock();
 
 		g.setPipeline(pipeline);
 		g.setVertexBuffer(vertexBuffer);
 		g.setIndexBuffer(indexBuffer);
+		var bilinear: Bool = false;
+		g.setTextureParameters(tex, TextureAddressing.Clamp, TextureAddressing.Clamp, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, bilinear ? TextureFilter.LinearFilter : TextureFilter.PointFilter, MipMapFilter.NoMipFilter);
+		g.setMatrix(projectionLocation, projectionMatrix);
 		if (depth) {
 			g.setTextureDepth(tex, image);
 		}
