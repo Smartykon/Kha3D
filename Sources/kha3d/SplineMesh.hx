@@ -92,7 +92,7 @@ class SplineMesh {
 		var lastpos1 = Spline.deBoor(spline, 0);
 		var lastpos2 = Spline.deBoor(spline, 0);
 		var lastpos3 = Spline.deBoor(spline, 0);
-		var lastpos4 = Spline.deBoor(spline, 0);
+		//var lastpos4 = Spline.deBoor(spline, 0);
 
 		var i = 0;
 		var pos = 0.0;
@@ -193,7 +193,7 @@ class SplineMesh {
 			lastpos1 = pos1;
 			lastpos2 = pos2;
 			lastpos3 = pos3;
-			lastpos4 = pos4;
+			//lastpos4 = pos4;
 
 			pos += subdivision;
 		}

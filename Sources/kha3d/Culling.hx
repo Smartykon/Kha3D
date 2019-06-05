@@ -66,6 +66,7 @@ class Culling {
 	}
 
 	public static function aabbInFrustum(planes: Array<Plane>, mins: FastVector3, maxs: FastVector3): Bool {
+		return true;
 		var sphere_radius = 5.0;
 		for (plane in planes) {
     		var dist = mins.x * plane.normal.x + mins.y * plane.normal.y + mins.z * plane.normal.z +   plane.d + sphere_radius;

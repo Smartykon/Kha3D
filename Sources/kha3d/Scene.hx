@@ -23,9 +23,13 @@ class Scene {
 	public static var splines: Array<SplineMesh> = [];
 	public static var lights: Array<FastVector3> = [];
 
+	// PDBikeForest:
+	public static var land_grid_mesh: LandGridMesh;
+	public static var street_mesh   : StreetMesh;
+
 	public static var instancedStructure: VertexStructure;
 	static var instancedVertexBuffer: VertexBuffer;
-	static var pipeline: PipelineState;
+	static var mesh_pipeline: PipelineState; // Vormals nur "pipeline"
 	static var mvp: ConstantLocation;
 	static var texUnit: TextureUnit;
 
@@ -48,17 +52,17 @@ class Scene {
 
 		instancedVertexBuffer = new VertexBuffer(meshes.length, instancedStructure, Usage.DynamicUsage, 1);
 
-		pipeline = new PipelineState();
-		pipeline.inputLayout = [meshes[0].mesh.structure, instancedStructure];
-		pipeline.vertexShader = Shaders.mesh_vert;
-		pipeline.fragmentShader = Shaders.mesh_frag;
-		pipeline.depthWrite = true;
-		pipeline.depthMode = CompareMode.Less;
-		pipeline.cullMode = Clockwise;
-		pipeline.compile();
+		mesh_pipeline = new PipelineState();
+		mesh_pipeline.inputLayout = [meshes[0].mesh.structure, instancedStructure];
+		mesh_pipeline.vertexShader = Shaders.mesh_vert;
+		mesh_pipeline.fragmentShader = Shaders.mesh_frag;
+		mesh_pipeline.depthWrite = true;
+		mesh_pipeline.depthMode = CompareMode.Less;
+		mesh_pipeline.cullMode = Clockwise;
+		mesh_pipeline.compile();
 		
-		mvp = pipeline.getConstantLocation("mvp");
-		texUnit = pipeline.getTextureUnit("image");
+		mvp = mesh_pipeline.getConstantLocation("mvp");
+		texUnit = mesh_pipeline.getTextureUnit("image");
 
 		colors = depth = Image.createRenderTarget(render_w, render_h, RGBA32, Depth32Stencil8);
 		normals = Image.createRenderTarget(render_w, render_h, RGBA32, NoDepthAndStencil);
@@ -82,7 +86,7 @@ class Scene {
 		//var planes = Culling.perspectiveToPlanes(vp);
 		//var planes = Culling.perspectiveToPlanes(comboMatrix);
 	//public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, image: Image): Void {
-		g.setPipeline(pipeline);
+		g.setPipeline(mesh_pipeline);
 		g.setMatrix(Scene.mvp, mvp);
 		g.setTexture(texUnit, image);
 
@@ -116,12 +120,20 @@ class Scene {
 		var g = colors.g4;
 		g.begin([normals]);
 		g.clear(0xff00ffff, Math.POSITIVE_INFINITY);
-		if (heightMap != null) {
-			heightMap.render(g, mvp, mv);
+		//if (heightMap != null) {
+		//	heightMap.render(g, mvp, mv);
+		//}
+		// PDBikeForest
+		if (land_grid_mesh != null) {
+			land_grid_mesh.render(g, mvp);
 		}
-		for (spline in splines) {
-			spline.render(g, mvp, mv, splineImage, heightsImage);
+		if (street_mesh != null) {
+			street_mesh.render(g, mvp);
 		}
+		//
+		//for (spline in splines) {
+		//	spline.render(g, mvp, mv, splineImage, heightsImage);
+		//}
 		renderMeshes(g, mvp, mv, vp, comboMatrix, meshImage);
 		g.end();
 	}
@@ -136,14 +148,14 @@ class Scene {
 		g.end();
 	}
 
-	public static function render1(position: Vector3, direction: Vector3) {
+	public static function render1(position: FastVector3, direction: FastVector3) {
 	//public static function render(frame: Canvas, position: Vector3, direction: Vector3) {
 		meshes.sort(function (a, b) {
 			return a.mesh.id - b.mesh.id;
 		});
 
 		var model = FastMatrix4.identity(); // FastMatrix4.rotationY(Scheduler.time());
-		var view = FastMatrix4.lookAt(position.fast(), position.add(direction).fast(), new FastVector3(0, 1, 0));
+		var view = FastMatrix4.lookAt(position, position.add(direction), new FastVector3(0, 1, 0));
 		var projection = FastMatrix4.perspectiveProjection(45, render_w / render_h, 0.1, 550.0);
 
 		var suneye = new FastVector3(position.x + 50.0, 150.0, position.z - 100.0);
@@ -166,7 +178,8 @@ class Scene {
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
 	}
-	public static function render2(g4: Graphics, position: Vector3, direction: Vector3) {
+
+	public static function render2(g4: Graphics, position: FastVector3, direction: FastVector3) {
 		var debug_w: Int = render_w * 2;
 		var debug_h: Int = render_h * 2;
 		TextureViewer.render(g4, colors, false, 0, 0, debug_w, debug_h);
