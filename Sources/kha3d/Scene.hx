@@ -25,7 +25,7 @@ class Scene {
 
 	// PDBikeForest:
 	public static var land_grid_mesh: LandGridMesh;
-	public static var street_mesh   : StreetMesh;
+	public static var street_mesh   : StreetNetMesh;
 
 	public static var instancedStructure: VertexStructure;
 	static var instancedVertexBuffer: VertexBuffer;
