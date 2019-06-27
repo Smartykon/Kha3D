@@ -1,5 +1,7 @@
 package kha3d;
 
+import js.html.Console;
+import kha.FastFloat;
 import kha.math.Vector3;
 import kha.Canvas;
 import kha.System;
@@ -49,6 +51,7 @@ class Scene {
 
 		instancedStructure = new VertexStructure();
 		instancedStructure.add("meshpos", VertexData.Float3);
+		instancedStructure.add("yrotate", VertexData.Float1);
 
 		instancedVertexBuffer = new VertexBuffer(meshes.length, instancedStructure, Usage.DynamicUsage, 1);
 
@@ -107,9 +110,10 @@ class Scene {
 					instanceIndex = 0;
 					lastMesh = mesh.mesh;
 				}
-				b2.set(instanceIndex * 3 + 0, mesh.pos.x);
-				b2.set(instanceIndex * 3 + 1, mesh.pos.y);
-				b2.set(instanceIndex * 3 + 2, mesh.pos.z);
+				b2.set(instanceIndex * 4 + 0, mesh.pos.x);
+				b2.set(instanceIndex * 4 + 1, mesh.pos.y);
+				b2.set(instanceIndex * 4 + 2, mesh.pos.z);
+				b2.set(instanceIndex * 4 + 3, mesh.yrotate);
 				++instanceIndex;
 			}
 		}
