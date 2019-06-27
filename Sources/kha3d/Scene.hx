@@ -73,13 +73,13 @@ class Scene {
 		Shadows.init();
 	}
 
-	static function setBuffers(g: Graphics): Void {
-		g.setIndexBuffer(meshes[0].mesh.indexBuffer);
-		g.setVertexBuffers([meshes[0].mesh.vertexBuffer, instancedVertexBuffer]);
+	static function setBuffers(g: Graphics, mesh: Mesh): Void {
+		g.setIndexBuffer(mesh.indexBuffer);
+		g.setVertexBuffers([mesh.vertexBuffer, instancedVertexBuffer]);
 	}
 
-	static function draw(g: Graphics, instanceCount: Int): Void {
-		g.drawIndexedVerticesInstanced(instanceCount, 0, meshes[0].mesh.indexBuffer.count());
+	static function draw(g: Graphics, mesh: Mesh, instanceCount: Int): Void {
+		g.drawIndexedVerticesInstanced(instanceCount, 0, mesh.indexBuffer.count());
 	}
 
 	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, image: Image): Void {
@@ -91,16 +91,21 @@ class Scene {
 		g.setTexture(texUnit, image);
 
 		var planes = Culling.perspectiveToPlanes(vp);
-
+		
 		var instanceIndex = 0;
-		var b2 = instancedVertexBuffer.lock();
 		var lastMesh: Mesh = null;
+		var b2 = null;
 		for (mesh in meshes) {
 			if (Culling.aabbInFrustum(planes, mesh.pos, mesh.pos)) {
-				if (lastMesh != null && mesh.mesh != lastMesh) {
-					setBuffers(g);
-					draw(g, instanceIndex);
+				if (mesh.mesh != lastMesh) {
+					if (instanceIndex > 0) {
+						instancedVertexBuffer.unlock();
+						draw(g, lastMesh, instanceIndex);
+					}
+					setBuffers(g, mesh.mesh);
+					b2 = instancedVertexBuffer.lock();
 					instanceIndex = 0;
+					lastMesh = mesh.mesh;
 				}
 				b2.set(instanceIndex * 3 + 0, mesh.pos.x);
 				b2.set(instanceIndex * 3 + 1, mesh.pos.y);
@@ -108,11 +113,10 @@ class Scene {
 				++instanceIndex;
 			}
 		}
-		instancedVertexBuffer.unlock();
 
 		if (instanceIndex > 0) {
-			setBuffers(g);
-			draw(g, instanceIndex);
+			instancedVertexBuffer.unlock();
+			draw(g, lastMesh, instanceIndex);
 		}
 	}
 
@@ -174,7 +178,9 @@ class Scene {
 
 		Shadows.render(sunMvp);
 
-		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, meshes[0].texture, splines[0].texture, heightMap.heightsImage);
+		var mesh0_texture: Image = null; if (meshes.length >= 1) mesh0_texture = meshes[0].texture;
+		var spline0_texture: Image = null; if (splines.length >= 1) spline0_texture = splines[0].texture;
+		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture, heightMap.heightsImage);
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
 	}
