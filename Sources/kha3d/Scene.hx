@@ -113,7 +113,7 @@ class Scene {
 				b2.set(instanceIndex * 4 + 0, mesh.pos.x);
 				b2.set(instanceIndex * 4 + 1, mesh.pos.y);
 				b2.set(instanceIndex * 4 + 2, mesh.pos.z);
-				b2.set(instanceIndex * 4 + 3, rotate_all);//mesh.yrotate);
+				b2.set(instanceIndex * 4 + 3, mesh.yrotate); //+rotate_all
 				++instanceIndex;
 			}
 		}
