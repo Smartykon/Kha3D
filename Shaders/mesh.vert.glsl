@@ -14,12 +14,14 @@ out vec3 norm;
 out vec3 cols;
 
 void main() {
-	norm = normal;
 	//tex = texcoord;
 	cols = colors;
 	mat3 m_yrotate = mat3(
 		cos(yrotate), 0, -sin(yrotate),
 	    0, 1, 0,
 		sin(yrotate), 0, cos(yrotate));
-	gl_Position = mvp * vec4(m_yrotate * (pos * 0.1) + meshpos, 1.0);
+	gl_Position = mvp * vec4((m_yrotate * pos) + meshpos, 1.0);
+	//gl_Position = mvp * vec4((pos * 0.1) + meshpos, 1.0);
+	norm = m_yrotate * normal;
+	//norm = normal;
 }

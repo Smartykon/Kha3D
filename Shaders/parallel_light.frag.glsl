@@ -31,11 +31,11 @@ void main() {
 	vec4 pos = inv * vec4(position, z, 1.0);
 	vec4 sunpos = sunMVP * pos;
 	if (inShadow(sunpos.xyz / sunpos.w)) {
-		frag = vec4(0.0, 0.0, 0.0, 1.0);
+		frag = vec4(1.0, 0.0, 0.0, 1.0);
 	}
 	else {
 		vec4 color = texture(albedo, clipToTex(position));
 		vec4 normal = texture(normals, clipToTex(position));
-		frag = vec4(dot(decodeNormal(normal.xyz), sunLightDir) * 0.5 * color.rgb, 1.0);
+		frag = vec4((dot(decodeNormal(normal.xyz), sunLightDir) * 0.5 + 0.5) * color.rgb, 1.0);
 	}
 }

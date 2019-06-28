@@ -56,14 +56,9 @@ class Mesh {
 		return mesh;
 	}
 
-	public static function fromPly(data: PlyData, xo: Int, yo: Int, scale: FastFloat): Mesh {
+	public static function fromPly(data: PlyData): Mesh {
 		var mesh: Mesh = new Mesh();
 		mesh.id = currentId++;
-
-		// zo automatisch
-		var zo: Int = 2;
-		if ((xo == zo) || (yo == zo)) zo--;
-		if ((xo == zo) || (yo == zo)) zo--;
 
 		var vertices = data.va.coords;
 		var colors   = data.va.colors;
@@ -81,10 +76,9 @@ class Mesh {
 		mesh.vertexBuffer = new VertexBuffer(vertices.length, mesh.structure, Usage.StaticUsage);
 		var buffer = mesh.vertexBuffer.lock();
 		for (i in 0...Std.int(vertices.length / 3)) {
-			buffer.set(i * 9 + 0, vertices[i * 3 + xo] * scale);
-			buffer.set(i * 9 + 1, vertices[i * 3 + yo] * scale);
-			buffer.set(i * 9 + 2, vertices[i * 3 + zo] * scale);
-
+			buffer.set(i * 9 + 0, vertices[i * 3 + 0]);
+			buffer.set(i * 9 + 1, vertices[i * 3 + 1]);
+			buffer.set(i * 9 + 2, vertices[i * 3 + 2]);
 			buffer.set(i * 9 + 3, normals[i * 3 + 0]);
 			buffer.set(i * 9 + 4, normals[i * 3 + 1]);
 			buffer.set(i * 9 + 5, normals[i * 3 + 2]);

@@ -61,7 +61,7 @@ class Scene {
 		mesh_pipeline.fragmentShader = Shaders.mesh_frag;
 		mesh_pipeline.depthWrite = true;
 		mesh_pipeline.depthMode = CompareMode.Less;
-		mesh_pipeline.cullMode = Clockwise;
+		mesh_pipeline.cullMode = CounterClockwise;//Clockwise;
 		mesh_pipeline.compile();
 		
 		mvp = mesh_pipeline.getConstantLocation("mvp");
@@ -85,7 +85,7 @@ class Scene {
 		g.drawIndexedVerticesInstanced(instanceCount, 0, mesh.indexBuffer.count());
 	}
 
-	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, image: Image): Void {
+	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, image: Image, rotate_all: FastFloat): Void {
 		//var planes = Culling.perspectiveToPlanes(vp);
 		//var planes = Culling.perspectiveToPlanes(comboMatrix);
 	//public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, image: Image): Void {
@@ -113,7 +113,7 @@ class Scene {
 				b2.set(instanceIndex * 4 + 0, mesh.pos.x);
 				b2.set(instanceIndex * 4 + 1, mesh.pos.y);
 				b2.set(instanceIndex * 4 + 2, mesh.pos.z);
-				b2.set(instanceIndex * 4 + 3, mesh.yrotate);
+				b2.set(instanceIndex * 4 + 3, rotate_all);//mesh.yrotate);
 				++instanceIndex;
 			}
 		}
@@ -124,7 +124,7 @@ class Scene {
 		}
 	}
 
-	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image) {//, heightsImage: Image) {
+	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image, rotate_all: FastFloat) {//, heightsImage: Image) {
 		var g = colors.g4;
 		g.begin([normals]);
 		g.clear(0xff00ffff, Math.POSITIVE_INFINITY);
@@ -142,7 +142,7 @@ class Scene {
 		//for (spline in splines) {
 		//	spline.render(g, mvp, mv, splineImage, heightsImage);
 		//}
-		renderMeshes(g, mvp, mv, vp, comboMatrix, meshImage);
+		renderMeshes(g, mvp, mv, vp, comboMatrix, meshImage, rotate_all);
 		g.end();
 	}
 
@@ -156,7 +156,7 @@ class Scene {
 		g.end();
 	}
 
-	public static function render1(position: FastVector3, direction: FastVector3) {
+	public static function render1(position: FastVector3, direction: FastVector3, rotate_all: FastFloat) {
 	//public static function render(frame: Canvas, position: Vector3, direction: Vector3) {
 		meshes.sort(function (a, b) {
 			return a.mesh.id - b.mesh.id;
@@ -184,7 +184,7 @@ class Scene {
 
 		var mesh0_texture: Image = null; if (meshes.length >= 1) mesh0_texture = meshes[0].texture;
 		var spline0_texture: Image = null; if (splines.length >= 1) spline0_texture = splines[0].texture;
-		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture);//, heightMap.heightsImage);
+		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture, rotate_all);//, heightMap.heightsImage);
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
 	}
