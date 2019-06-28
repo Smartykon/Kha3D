@@ -20,7 +20,7 @@ import kha.math.FastVector3;
 import kha.Shaders;
 
 class Scene {
-	public static var heightMap: HeightMap = null;
+	//public static var heightMap: HeightMap = null;
 	public static var meshes: Array<MeshObject> = [];
 	public static var splines: Array<SplineMesh> = [];
 	public static var lights: Array<FastVector3> = [];
@@ -65,7 +65,7 @@ class Scene {
 		mesh_pipeline.compile();
 		
 		mvp = mesh_pipeline.getConstantLocation("mvp");
-		texUnit = mesh_pipeline.getTextureUnit("image");
+		texUnit = mesh_pipeline.getTextureUnit("erde1");
 
 		colors = depth = Image.createRenderTarget(render_w, render_h, RGBA32, Depth32Stencil8);
 		normals = Image.createRenderTarget(render_w, render_h, RGBA32, NoDepthAndStencil);
@@ -124,7 +124,7 @@ class Scene {
 		}
 	}
 
-	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image, heightsImage: Image) {
+	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image) {//, heightsImage: Image) {
 		var g = colors.g4;
 		g.begin([normals]);
 		g.clear(0xff00ffff, Math.POSITIVE_INFINITY);
@@ -184,7 +184,7 @@ class Scene {
 
 		var mesh0_texture: Image = null; if (meshes.length >= 1) mesh0_texture = meshes[0].texture;
 		var spline0_texture: Image = null; if (splines.length >= 1) spline0_texture = splines[0].texture;
-		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture, heightMap.heightsImage);
+		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture);//, heightMap.heightsImage);
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
 	}
