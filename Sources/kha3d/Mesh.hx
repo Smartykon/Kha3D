@@ -66,6 +66,8 @@ class Mesh {
 		if ((xo == zo) || (yo == zo)) zo--;
 
 		var vertices = data.va.coords;
+		var colors   = data.va.colors;
+		var normals  = data.va.normals;
 		//var normals = data.geometryObjects[0].mesh.vertexArrays[1].values;
 		//var texcoords = data.geometryObjects[0].mesh.vertexArrays[2].values;
 		var indices = data.ia.values;
@@ -73,20 +75,23 @@ class Mesh {
 		mesh.structure = new VertexStructure();
 		mesh.structure.add("pos", VertexData.Float3);
 		mesh.structure.add("normal", VertexData.Float3); // Sind zumindest nicht in Ply-Dateien aus MagicaVoxel. Müssten noch extra berechnet werden.
-		mesh.structure.add("texcoord", VertexData.Float2); // ply-Dateien aus MagicaVoxel sind untexturiert.
+		//mesh.structure.add("texcoord", VertexData.Float2); // ply-Dateien aus MagicaVoxel sind untexturiert.
+		mesh.structure.add("colors", VertexData.Float3);
 
 		mesh.vertexBuffer = new VertexBuffer(vertices.length, mesh.structure, Usage.StaticUsage);
 		var buffer = mesh.vertexBuffer.lock();
 		for (i in 0...Std.int(vertices.length / 3)) {
-			buffer.set(i * 8 + 0, vertices[i * 3 + xo] * scale);
-			buffer.set(i * 8 + 1, vertices[i * 3 + yo] * scale);
-			buffer.set(i * 8 + 2, vertices[i * 3 + zo] * scale);
+			buffer.set(i * 9 + 0, vertices[i * 3 + xo] * scale);
+			buffer.set(i * 9 + 1, vertices[i * 3 + yo] * scale);
+			buffer.set(i * 9 + 2, vertices[i * 3 + zo] * scale);
 
-			buffer.set(i * 8 + 3, 0.0);//normals[i * 3 + 0]);
-			buffer.set(i * 8 + 4, 1.0);//normals[i * 3 + 1]);
-			buffer.set(i * 8 + 5, 0.0);//normals[i * 3 + 2]);
-			buffer.set(i * 8 + 6, 0.0);//texcoords[i * 2 + 0]);
-			buffer.set(i * 8 + 7, 0.0);//texcoords[i * 2 + 1]);
+			buffer.set(i * 9 + 3, normals[i * 3 + 0]);
+			buffer.set(i * 9 + 4, normals[i * 3 + 1]);
+			buffer.set(i * 9 + 5, normals[i * 3 + 2]);
+			var cols: UInt = colors[i];
+			buffer.set(i * 9 + 6, ( cols        & 255) * (1.0 / 255.0));//texcoords[i * 2 + 0]);
+			buffer.set(i * 9 + 7, ((cols >>  8) & 255) * (1.0 / 255.0));//texcoords[i * 2 + 1]);
+			buffer.set(i * 9 + 8, ((cols >> 16) & 255) * (1.0 / 255.0));//texcoords[i * 2 + 1]);
 		}
 		mesh.vertexBuffer.unlock();
 		
