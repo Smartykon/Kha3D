@@ -1,10 +1,11 @@
 package kha3d;
 
+import kha3d.cull.AABox;
 import js.html.Console;
 import kha.FastFloat;
-import kha.math.Vector3;
-import kha.Canvas;
-import kha.System;
+//import kha.math.Vector3;
+//import kha.Canvas;
+//import kha.System;
 import kha.Image;
 import kha.math.FastMatrix4;
 import kha.graphics4.Graphics;
@@ -18,6 +19,7 @@ import kha.graphics4.VertexStructure;
 import kha.graphics4.PipelineState;
 import kha.math.FastVector3;
 import kha.Shaders;
+import kha3d.cull.FrustumG;
 
 class Scene {
 	//public static var heightMap: HeightMap = null;
@@ -85,7 +87,7 @@ class Scene {
 		g.drawIndexedVerticesInstanced(instanceCount, 0, mesh.indexBuffer.count());
 	}
 
-	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, image: Image, rotate_all: FastFloat): Void {
+	public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp1: FastMatrix4, culling_frustum: FrustumG, image: Image, rotate_all: FastFloat, camera_vec: FastVector3): Void {
 		//var planes = Culling.perspectiveToPlanes(vp);
 		//var planes = Culling.perspectiveToPlanes(comboMatrix);
 	//public static function renderMeshes(g: Graphics, mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, image: Image): Void {
@@ -93,13 +95,14 @@ class Scene {
 		g.setMatrix(Scene.mvp, mvp);
 		g.setTexture(texUnit, image);
 
-		var planes = Culling.perspectiveToPlanes(vp);
-		
 		var instanceIndex = 0;
 		var lastMesh: Mesh = null;
 		var b2 = null;
 		for (mesh in meshes) {
-			if (Culling.aabbInFrustum(planes, mesh.pos, mesh.pos)) {
+			//if (Culling.aabbInFrustum(culling_planes, mesh.pos, mesh.pos)) {
+			var mesh_pos: FastVector3 = new FastVector3(mesh.pos.x - 2.0, mesh.pos.y - 2.0, mesh.pos.z - 2.0);
+			var aabox: AABox = AABox.new1(mesh_pos, 4.0, 4.0, 4.0); // TODO: Genauer machen. Darauf achten, daß die Meshes um die Y-Achse gedreht werden können.
+			if (culling_frustum.boxInFrustum(aabox) != FrustumGWhere.OUTSIDE) {
 				if (mesh.mesh != lastMesh) {
 					if (instanceIndex > 0) {
 						instancedVertexBuffer.unlock();
@@ -124,7 +127,7 @@ class Scene {
 		}
 	}
 
-	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, comboMatrix: FastMatrix4, meshImage: Image, splineImage: Image, rotate_all: FastFloat) {//, heightsImage: Image) {
+	public static function renderGBuffer(mvp: FastMatrix4, mv: FastMatrix4, vp: FastMatrix4, frustum_culling: FrustumG, meshImage: Image, splineImage: Image, rotate_all: FastFloat, camera_vec: FastVector3) {//, heightsImage: Image) {
 		var g = colors.g4;
 		g.begin([normals]);
 		g.clear(0xff00ffff, Math.POSITIVE_INFINITY);
@@ -142,7 +145,7 @@ class Scene {
 		//for (spline in splines) {
 		//	spline.render(g, mvp, mv, splineImage, heightsImage);
 		//}
-		renderMeshes(g, mvp, mv, vp, comboMatrix, meshImage, rotate_all);
+		renderMeshes(g, mvp, mv, vp, frustum_culling, meshImage, rotate_all, camera_vec);
 		g.end();
 	}
 
@@ -164,7 +167,11 @@ class Scene {
 
 		var model = FastMatrix4.identity(); // FastMatrix4.rotationY(Scheduler.time());
 		var view = FastMatrix4.lookAt(position, position.add(direction), new FastVector3(0, 1, 0));
-		var projection = FastMatrix4.perspectiveProjection(45, render_w / render_h, 0.1, 550.0);
+		var projection = FastMatrix4.perspectiveProjection(45, render_w / render_h, 0.1, 100.0);
+
+		var culling_frustum: FrustumG = new FrustumG();
+		culling_frustum.setCamInternals(45, render_w / render_h, 0.1, 100.0);
+		culling_frustum.setCamDef(position, position.add(direction), new FastVector3(0, 1, 0));
 
 		var suneye = new FastVector3(position.x + 50.0, 150.0, position.z - 100.0);
 		var sunat = new FastVector3(position.x, 0, position.z);
@@ -175,16 +182,13 @@ class Scene {
 		var mvp = projection.multmat(view).multmat(model);
 		var inv = mvp.inverse();
 
-		var comboMatrix = projection.multmat( view );
-		//var comboMatrix =  projection.multmat( mv );
-
 		var sunMvp = sunprojection.multmat(sunview).multmat(model);
 
 		Shadows.render(sunMvp);
 
 		var mesh0_texture: Image = null; if (meshes.length >= 1) mesh0_texture = meshes[0].texture;
 		var spline0_texture: Image = null; if (splines.length >= 1) spline0_texture = splines[0].texture;
-		Scene.renderGBuffer(mvp, mv, projection.multmat(view), comboMatrix, mesh0_texture, spline0_texture, rotate_all);//, heightMap.heightsImage);
+		Scene.renderGBuffer(mvp, mv, projection.multmat(view), culling_frustum, mesh0_texture, spline0_texture, rotate_all, position);//, heightMap.heightsImage);
 		
 		Scene.renderImage(suneye, sunat, mvp, inv, sunMvp);
 	}

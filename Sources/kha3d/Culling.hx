@@ -1,11 +1,12 @@
 package kha3d;
 
+import js.html.Console;
 import kha.math.FastMatrix4;
 import kha.math.FastVector3;
 
 class Culling {
 	// see http://www.cs.otago.ac.nz/postgrads/alexis/planeExtraction.pdf
-	public static function perspectiveToPlanes(vp: FastMatrix4) {
+	public static function perspectiveToPlaness(vp: FastMatrix4) {
 		var planes = new Array<Plane>();
 
 		var zNear = new Plane();
@@ -14,7 +15,7 @@ class Culling {
 		zNear.normal.z = vp._22 + vp._32;
 		zNear.d        = vp._23 + vp._33;
 		//zNear.normal.normalize();
-		zNear.normalizeN();
+		zNear.normalize();
 		planes.push(zNear);
 
 		var zFar = new Plane();
@@ -23,7 +24,7 @@ class Culling {
 		zFar.normal.z = -vp._22 + vp._32;
 		zFar.d        = -vp._23 + vp._33;
 		//zFar.normal.normalize();
-		zFar.normalizeN();
+		zFar.normalize();
 		planes.push(zFar);
 
 		var bottom = new Plane();
@@ -32,7 +33,7 @@ class Culling {
 		bottom.normal.z = vp._12 + vp._32;
 		bottom.d        = vp._13 + vp._33;
 		//bottom.normal.normalize();
-		bottom.normalizeN();
+		bottom.normalize();
 		planes.push(bottom);
 
 		var top = new Plane();
@@ -41,7 +42,7 @@ class Culling {
 		top.normal.z = -vp._12 + vp._32;
 		top.d        = -vp._13 + vp._33;
 		//top.normal.normalize();
-		top.normalizeN();
+		top.normalize();
 		planes.push(top);
 
 		var left = new Plane();
@@ -50,7 +51,7 @@ class Culling {
 		left.normal.z = vp._02 + vp._32;
 		left.d        = vp._03 + vp._33;
 		//left.normal.normalize();
-		left.normalizeN();
+		left.normalize();
 		planes.push(left);
 
 		var right = new Plane();
@@ -59,19 +60,22 @@ class Culling {
 		right.normal.z = -vp._02 + vp._32;
 		right.d        = -vp._03 + vp._33;
 		//right.normal.normalize();
-		right.normalizeN();
+		right.normalize();
 		planes.push(right);
 
 		return planes;
 	}
 
 	public static function aabbInFrustum(planes: Array<Plane>, mins: FastVector3, maxs: FastVector3): Bool {
-		return true;
-		var sphere_radius = 5.0;
-		for (plane in planes) {
-    		var dist = mins.x * plane.normal.x + mins.y * plane.normal.y + mins.z * plane.normal.z +   plane.d + sphere_radius;
-    		if (dist < 0) return false; // sphere culled
-		}
+		//return true;
+		var sphere_radius = 1.0;
+		//for (plane in planes) {
+    	//	var dist = mins.x * plane.normal.x + mins.y * plane.normal.y + mins.z * plane.normal.z +   plane.d + sphere_radius;
+    	//	if (dist < 0) return false; // sphere culled
+		//}
+		var plane = planes[1]; // zFar
+   		var dist = mins.x * plane.normal.x + mins.y * plane.normal.y + mins.z * plane.normal.z +   plane.d + sphere_radius;
+   		if (dist < 0) return false; // sphere culled
 		return true;
 
 
